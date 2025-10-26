@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     g++ \
     cmake \
     postgresql-client \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     tesseract-ocr \
     tesseract-ocr-eng \
@@ -31,7 +31,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download spaCy language model for NLP
-RUN python -m spacy download en_core_web_sm
+RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1.tar.gz
 
 # Download NLTK data for text processing
 RUN python -m nltk.downloader punkt stopwords averaged_perceptron_tagger

@@ -4,7 +4,7 @@ Analysis Orchestration Tasks for Processing Instagram Posts
 Uses Celery group() for parallel processing of independent analyses.
 """
 
-from celery import shared_task, group
+from celery import shared_task, group, chord
 from sqlalchemy.orm import Session
 from uuid import UUID
 import time
@@ -24,6 +24,228 @@ from app.tasks.fact_checking_task import run_fact_checking
 from app.tasks.source_evaluation_task import run_source_evaluation
 
 logger = logging.getLogger(__name__)
+
+
+@shared_task(name="analysis.complete_analysis", bind=True)
+def complete_analysis(self, parallel_results: list, analysis_id: str, post_info: dict,
+                      caption: str, instagram_user: dict, instagram_url: str,
+                      created_timestamp: float) -> dict:
+    """
+    Callback task that runs after parallel analyses complete.
+
+    Handles sequential tasks (fact-checking, source evaluation, scoring)
+    and final database update.
+
+    Args:
+        parallel_results: List of [ai_result, ocr_result, deepfake_result]
+        analysis_id: UUID of the analysis
+        post_info: Instagram post metadata
+        caption: Post caption text
+        instagram_user: User information
+        instagram_url: Original Instagram URL
+        created_timestamp: Analysis start timestamp
+
+    Returns:
+        dict: Final analysis results
+    """
+    with get_db_context() as db:
+        try:
+            # Unpack parallel results
+            ai_result = parallel_results[0]
+            ocr_result = parallel_results[1]
+            deepfake_result = parallel_results[2]
+
+            logger.info(f"✅ [Callback] Parallel tasks complete for {analysis_id}")
+            logger.info(f"   AI Detection: {ai_result.get('status')}")
+            logger.info(f"   OCR Extraction: {ocr_result.get('status')}")
+            logger.info(f"   Deepfake Detection: {deepfake_result.get('status')}")
+
+            # ==========================================
+            # STEP 3: Run Fact-Checking (Sequential)
+            # ==========================================
+            logger.info(f"🔍 [Callback] Running fact-checking")
+            logger.info(f"📊 [Callback] OCR result keys: {list(ocr_result.keys()) if ocr_result else 'None'}")
+
+            # Get combined text from OCR result
+            combined_text = None
+            if ocr_result and isinstance(ocr_result, dict):
+                if "combined" in ocr_result and isinstance(ocr_result["combined"], dict):
+                    combined_text = ocr_result["combined"].get("combined_text")
+
+            # Fallback to caption if no OCR text
+            if not combined_text:
+                combined_text = caption
+                logger.warning(f"⚠️ [Callback] No OCR combined text found, using caption only")
+
+            logger.info(f"📝 [Callback] Combined text length: {len(combined_text) if combined_text else 0}")
+
+            # Import and call as regular function (not Celery task)
+            from app.services.claim_extractor import claim_extractor
+            from app.services.fact_checking_service import fact_checking_service
+
+            try:
+                # Extract claims
+                claim_extractor.initialize()
+                claim_data = claim_extractor.extract_claims(combined_text)
+
+                # Analyze credibility
+                fact_check_analysis = fact_checking_service.analyze_claims(claim_data, combined_text)
+
+                fact_check_result = {
+                    "status": "completed",
+                    "claim_extraction": {
+                        "total_claims": claim_data.get("total_claims", 0),
+                        "claim_types": claim_data.get("claim_types", {}),
+                        "has_claims": claim_data.get("has_claims", False),
+                        "sentiment": claim_data.get("sentiment", "neutral")
+                    },
+                    "credibility_analysis": {
+                        "score": fact_check_analysis.get("credibility_score", {}).get("score", 50),
+                        "interpretation": fact_check_analysis.get("credibility_score", {}).get("interpretation", "Unknown"),
+                        "penalties": fact_check_analysis.get("credibility_score", {}).get("penalties", 0),
+                        "bonuses": fact_check_analysis.get("credibility_score", {}).get("bonuses", 0)
+                    },
+                    "flags": fact_check_analysis.get("flags", []),
+                    "risk_level": fact_check_analysis.get("risk_level", "unknown"),
+                    "requires_manual_review": fact_check_analysis.get("requires_manual_review", False),
+                    "summary": fact_check_analysis.get("summary", ""),
+                    "analyzed_claims": fact_check_analysis.get("analyzed_claims", [])
+                }
+            except Exception as fc_error:
+                logger.error(f"❌ [Callback] Fact-checking failed: {fc_error}")
+                fact_check_result = {
+                    "status": "failed",
+                    "error": str(fc_error)
+                }
+
+            logger.info(f"✅ [Callback] Fact-checking: {fact_check_result.get('status')}")
+
+            # ==========================================
+            # STEP 4: Run Source Evaluation (Sequential)
+            # ==========================================
+            logger.info(f"📰 [Callback] Running source evaluation")
+
+            # Import and call as regular function
+            from app.services.source_evaluation_service import source_evaluation_service
+
+            try:
+                source_eval_result = source_evaluation_service.evaluate_instagram_user(instagram_user)
+            except Exception as se_error:
+                logger.error(f"❌ [Callback] Source evaluation failed: {se_error}")
+                source_eval_result = {
+                    "status": "failed",
+                    "error": str(se_error)
+                }
+
+            logger.info(f"✅ [Callback] Source evaluation: {source_eval_result.get('status')}")
+
+            # ==========================================
+            # STEP 5: Aggregate Results
+            # ==========================================
+            post_type = post_info.get("type", "")
+            image_urls = post_info.get("images", [])
+            video_urls = post_info.get("videos", [])
+
+            results = {
+                "instagram_extraction": {
+                    "status": "success",
+                    "post_type": post_type,
+                    "media_count": len(image_urls) + len(video_urls)
+                },
+                "ai_detection": ai_result,
+                "ocr": ocr_result,
+                "deepfake": deepfake_result,
+                "fact_check": fact_check_result,
+                "source_credibility": source_eval_result
+            }
+
+            # ==========================================
+            # STEP 6: Calculate Trust Score
+            # ==========================================
+            logger.info(f"🎯 [Callback] Calculating trust score")
+
+            # Use centralized calculator
+            score_result = calculate_trust_score(results)
+
+            # Extract trust score and grade
+            trust_score = score_result.final_score
+            grade = score_result.grade
+
+            # Add score breakdown to results
+            results["trust_score_breakdown"] = {
+                "final_score": score_result.final_score,
+                "grade": score_result.grade,
+                "grade_info": score_result.grade_info,
+                "adjustments": [
+                    {
+                        "component": adj.component,
+                        "category": adj.category,
+                        "impact": adj.impact,
+                        "reason": adj.reason,
+                        "metadata": adj.metadata
+                    }
+                    for adj in score_result.adjustments
+                ],
+                "component_scores": score_result.component_scores,
+                "total_penalties": score_result.total_penalties,
+                "total_bonuses": score_result.total_bonuses,
+                "flags": score_result.flags,
+                "requires_review": score_result.requires_review
+            }
+
+            # Calculate processing time
+            processing_time = int(time.time() - created_timestamp)
+
+            # ==========================================
+            # STEP 7: Update Database
+            # ==========================================
+            crud_analysis.update_results(
+                db=db,
+                analysis_id=UUID(analysis_id),
+                results=results,
+                trust_score=trust_score,
+                processing_time=processing_time
+            )
+
+            # ==========================================
+            # CACHE THE RESULTS
+            # ==========================================
+            cache_data = {
+                "results": results,
+                "trust_score": trust_score,
+                "grade": grade,
+                "post_info": post_info
+            }
+            cache_manager.cache_analysis_result(instagram_url, cache_data)
+
+            logger.info(f"✅ [Callback] Analysis complete!")
+            logger.info(f"   Trust Score: {trust_score}/100 ({grade})")
+            logger.info(f"   Processing Time: {processing_time}s")
+
+            return {
+                "status": "success",
+                "analysis_id": analysis_id,
+                "trust_score": trust_score,
+                "grade": grade,
+                "post_type": post_type,
+                "processing_time": processing_time,
+                "cached": False
+            }
+
+        except Exception as e:
+            logger.error(f"❌ [Callback] Analysis failed: {e}")
+
+            # Update analysis status to failed
+            analysis = crud_analysis.get_by_id(db, UUID(analysis_id))
+            if analysis:
+                analysis.status = "failed"
+                analysis.error_message = str(e)
+                db.commit()
+
+            return {
+                "status": "error",
+                "error": str(e)
+            }
 
 
 @shared_task(name="analysis.process_post", bind=True)
@@ -121,10 +343,13 @@ def process_instagram_post(self, analysis_id: str) -> dict:
             instagram_user = post_info.get("user", {})
 
             # ==========================================
-            # STEP 2: Run Parallel Analyses
+            # STEP 2: Run Parallel Analyses with Chord Pattern
             # ==========================================
             logger.info(f"⚡ [Orchestrator] Starting parallel analysis tasks")
             logger.info(f"   Images: {len(image_urls)}, Videos: {len(video_urls)}")
+
+            # Store timestamp for processing time calculation
+            created_timestamp = analysis.created_at.timestamp()
 
             # Create parallel task group - these run SIMULTANEOUSLY
             parallel_tasks = group([
@@ -133,132 +358,27 @@ def process_instagram_post(self, analysis_id: str) -> dict:
                 run_deepfake_detection.s(video_urls, image_urls, post_type)
             ])
 
-            # Execute parallel tasks
-            parallel_job = parallel_tasks.apply_async()
-
-            # Wait for all parallel tasks to complete (max 2 minutes)
-            parallel_results = parallel_job.get(timeout=120)
-
-            # Unpack results
-            ai_result = parallel_results[0]
-            ocr_result = parallel_results[1]
-            deepfake_result = parallel_results[2]
-
-            logger.info(f"✅ [Orchestrator] Parallel tasks complete!")
-            logger.info(f"   AI Detection: {ai_result.get('status')}")
-            logger.info(f"   OCR Extraction: {ocr_result.get('status')}")
-            logger.info(f"   Deepfake Detection: {deepfake_result.get('status')}")
-
-            # ==========================================
-            # STEP 3: Run Fact-Checking (Sequential)
-            # ==========================================
-            logger.info(f"🔍 [Orchestrator] Running fact-checking")
-
-            # Get combined text from OCR result
-            combined_text = ocr_result.get("combined", {}).get("combined_text", caption)
-
-            # Run fact-checking
-            fact_check_result = run_fact_checking(combined_text)
-
-            logger.info(f"✅ [Orchestrator] Fact-checking: {fact_check_result.get('status')}")
-
-            # ==========================================
-            # STEP 4: Run Source Evaluation (Sequential)
-            # ==========================================
-            logger.info(f"📰 [Orchestrator] Running source evaluation")
-
-            # Run source evaluation
-            source_eval_result = run_source_evaluation(combined_text, instagram_user)
-
-            logger.info(f"✅ [Orchestrator] Source evaluation: {source_eval_result.get('status')}")
-
-            # ==========================================
-            # STEP 5: Aggregate Results
-            # ==========================================
-            results = {
-                "instagram_extraction": {
-                    "status": "success",
-                    "post_type": post_type,
-                    "media_count": len(image_urls) + len(video_urls)
-                },
-                "ai_detection": ai_result,
-                "ocr": ocr_result,
-                "deepfake": deepfake_result,
-                "fact_check": fact_check_result,
-                "source_credibility": source_eval_result
-            }
-
-            # ==========================================
-            # STEP 6: Calculate Trust Score
-            # ==========================================
-            logger.info(f"🎯 [Orchestrator] Calculating trust score")
-
-            # Use centralized calculator
-            score_result = calculate_trust_score(results)
-
-            # Extract trust score and grade
-            trust_score = score_result.final_score
-            grade = score_result.grade
-
-            # Add score breakdown to results
-            results["trust_score_breakdown"] = {
-                "final_score": score_result.final_score,
-                "grade": score_result.grade,
-                "grade_info": score_result.grade_info,
-                "adjustments": [
-                    {
-                        "component": adj.component,
-                        "category": adj.category,
-                        "impact": adj.impact,
-                        "reason": adj.reason,
-                        "metadata": adj.metadata
-                    }
-                    for adj in score_result.adjustments
-                ],
-                "component_scores": score_result.component_scores,
-                "total_penalties": score_result.total_penalties,
-                "total_bonuses": score_result.total_bonuses,
-                "flags": score_result.flags,
-                "requires_review": score_result.requires_review
-            }
-
-            # Calculate processing time
-            processing_time = int(time.time() - analysis.created_at.timestamp())
-
-            # ==========================================
-            # STEP 7: Update Database
-            # ==========================================
-            crud_analysis.update_results(
-                db=db,
-                analysis_id=UUID(analysis_id),
-                results=results,
-                trust_score=trust_score,
-                processing_time=processing_time
+            # Use chord: parallel_tasks | callback
+            # The callback receives the list of results from parallel tasks
+            workflow = chord(parallel_tasks)(
+                complete_analysis.s(
+                    analysis_id=analysis_id,
+                    post_info=post_info,
+                    caption=caption,
+                    instagram_user=instagram_user,
+                    instagram_url=instagram_url,
+                    created_timestamp=created_timestamp
+                )
             )
 
-            # ==========================================
-            # CACHE THE RESULTS
-            # ==========================================
-            cache_data = {
-                "results": results,
-                "trust_score": trust_score,
-                "grade": grade,
-                "post_info": post_info
-            }
-            cache_manager.cache_analysis_result(instagram_url, cache_data)
+            logger.info(f"✅ [Orchestrator] Parallel tasks launched with callback")
+            logger.info(f"   Workflow will complete asynchronously")
 
-            logger.info(f"✅ [Orchestrator] Analysis complete!")
-            logger.info(f"   Trust Score: {trust_score}/100 ({grade})")
-            logger.info(f"   Processing Time: {processing_time}s")
-
+            # Return immediately - callback will handle the rest
             return {
-                "status": "success",
+                "status": "processing",
                 "analysis_id": analysis_id,
-                "trust_score": trust_score,
-                "grade": grade,
-                "post_type": post_type,
-                "processing_time": processing_time,
-                "cached": False
+                "message": "Parallel analysis in progress"
             }
 
         except Exception as e:

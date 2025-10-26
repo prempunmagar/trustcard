@@ -9,7 +9,7 @@ import logging
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
-from app.config.scoring_config import (
+from app.scoring.scoring_config import (
     TrustScoreConfig,
     DEFAULT_CONFIG,
     get_grade_from_score,

@@ -1,8 +1,8 @@
 """
-Configuration package for TrustCard
+Scoring configuration package for TrustCard
 """
 
-from app.config.scoring_config import (
+from app.scoring.scoring_config import (
     TrustScoreConfig,
     DEFAULT_CONFIG,
     get_grade_from_score,
