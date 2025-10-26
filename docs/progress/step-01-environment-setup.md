@@ -3,7 +3,7 @@
 **Project:** TrustCard - "Every post gets a report card"
 **Last Updated:** October 25, 2025
 **Developer:** Prem Punmagar
-**Current Step:** 1 of 17 - Environment Setup & Project Structure
+**Current Step:** 2 of 17 - Database Setup
 
 ---
 
@@ -12,7 +12,7 @@
 | Step | Task | Status | Date Completed |
 |------|------|--------|----------------|
 | 1 | Environment Setup & Project Structure | ✅ Completed | Oct 25, 2025 |
-| 2 | Database Schema & Models | ⏳ Pending | - |
+| 2 | Database Setup (PostgreSQL + SQLAlchemy) | ✅ Completed | Oct 25, 2025 |
 | 3 | Redis & Celery Configuration | ⏳ Pending | - |
 | 4 | Instagram Integration | ⏳ Pending | - |
 | 5-17 | Additional Features | ⏳ Pending | - |
