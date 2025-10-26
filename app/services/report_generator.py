@@ -46,7 +46,12 @@ class ReportGenerator:
             str: HTML report
         """
         try:
-            template = self.env.get_template('report_card.html')
+            # Use enhanced TrustCard template if available
+            trust_card = results.get('trust_card')
+            if trust_card:
+                template = self.env.get_template('trustcard_enhanced.html')
+            else:
+                template = self.env.get_template('report_card.html')
 
             # Extract score data
             score = score_data.get("final_score", score_data.get("score", 0))
@@ -94,28 +99,93 @@ class ReportGenerator:
             user_info = post_info.get("user", {})
             username = user_info.get("username", "unknown")
 
+            # Extract narrative-focused data
+            caption = post_info.get("caption", "")
+
+            # Get the first image from the post
+            post_image_url = None
+            images = post_info.get("images", [])
+            if images:
+                post_image_url = images[0]
+
+            # AI Detection - simple boolean and confidence
+            ai_detected = False
+            ai_confidence = 0
+            ai_data = results.get("ai_detection", {})
+            if ai_data.get("status") == "completed":
+                overall = ai_data.get("overall", {})
+                ai_detected = overall.get("overall_ai_detected", False)
+                ai_confidence = round(overall.get("confidence", 0) * 100, 1)
+
+            # OCR Text from images
+            ocr_text = None
+            ocr_data = results.get("ocr", {})
+            if ocr_data.get("status") == "completed":
+                combined = ocr_data.get("combined", {})
+                if combined:
+                    # Get just the extracted text from images (not caption)
+                    ocr_text = combined.get("combined_text", "")
+                    # Remove caption part if it exists
+                    if caption and ocr_text:
+                        ocr_text = ocr_text.replace(f"Caption:\n{caption}\n\n---\n\nText in Images:\n", "")
+
+            # Fact-check details
+            fact_check = None
+            fc_data = results.get("fact_check", {})
+            if fc_data.get("status") == "completed":
+                claim_extraction = fc_data.get("claim_extraction", {})
+
+                # Get claims list from extraction
+                claims = []
+                if claim_extraction and "claims" in claim_extraction:
+                    claims = claim_extraction.get("claims", [])
+
+                fact_check = {
+                    "total_claims": claim_extraction.get("total_claims", 0),
+                    "claims": claims,
+                    "flags": fc_data.get("flags", []),
+                    "risk_level": fc_data.get("risk_level", "unknown"),
+                }
+
+            # Source credibility
+            source_credibility = None
+            source_data = results.get("source_credibility", {})
+            if source_data:
+                source_credibility = {
+                    "is_verified": source_data.get("is_verified", False),
+                }
+
+            # Build final verdict narrative
+            final_verdict = self._build_verdict(ai_detected, fact_check, source_credibility)
+
+
             # Render template
             html = template.render(
                 analysis_id=analysis_id,
                 post_id=post_info.get("post_id", "unknown"),
                 username=username,
                 analyzed_date=datetime.utcnow().strftime("%B %d, %Y at %I:%M %p UTC"),
-                processing_time=results.get("instagram_extraction", {}).get("processing_time", 0),
+                generated_at=trust_card.get('generated_at') if trust_card else datetime.utcnow().isoformat(),
                 score=score,
                 grade=grade,
                 grade_color=grade_color,
                 assessment=assessment,
-                components=components,
-                findings=findings,
                 recommendation=recommendation,
-                total_votes=total_votes,
-                accurate_count=accurate_count,
-                misleading_count=misleading_count,
-                false_count=false_count,
-                accurate_percent=accurate_percent,
-                misleading_percent=misleading_percent,
-                false_percent=false_percent,
-                current_year=datetime.utcnow().year
+                current_year=datetime.utcnow().year,
+                # TrustCard data
+                trust_card=trust_card,
+                # Narrative data
+                post_image_url=post_image_url,
+                caption=caption,
+                ocr_text=ocr_text,
+                ai_detected=ai_detected,
+                ai_confidence=ai_confidence,
+                fact_check=fact_check,
+                source_credibility=source_credibility,
+                final_verdict=final_verdict,
+                # Legacy for backwards compat
+                components=components,
+                findings=findings
             )
 
             logger.info(f"✅ Generated HTML report for {analysis_id}")
@@ -306,6 +376,40 @@ class ReportGenerator:
             return "Exercise caution. Multiple concerns detected. Verify before trusting."
         else:
             return "Do not share without thorough verification. Significant credibility concerns detected."
+
+    def _build_verdict(self, ai_detected: bool, fact_check: Dict, source_credibility: Dict) -> str:
+        """Build human-readable verdict based on analysis"""
+        verdict_parts = []
+
+        if ai_detected:
+            verdict_parts.append("This post uses AI-generated imagery, which means it's not showing a real photograph.")
+
+        if fact_check:
+            total_claims = fact_check.get("total_claims", 0)
+            risk_level = fact_check.get("risk_level", "unknown")
+
+            if total_claims > 0:
+                if risk_level == "high":
+                    verdict_parts.append(f"The post makes {total_claims} factual claims that are highly questionable and should not be trusted without independent verification.")
+                elif risk_level == "medium":
+                    verdict_parts.append(f"The post contains {total_claims} claims that mix factual information with potentially misleading context.")
+                else:
+                    verdict_parts.append(f"The post makes {total_claims} factual claims that need verification but appear to contain some accurate elements.")
+
+        if source_credibility and not source_credibility.get("is_verified"):
+            verdict_parts.append("The source is not a verified account, which means its credibility cannot be independently confirmed.")
+
+        # Final assessment
+        if ai_detected and fact_check and fact_check.get("total_claims", 0) > 0:
+            verdict_parts.append("**This appears to be misleading content combining fake AI imagery with unverified claims about a real historical artifact.**")
+        elif ai_detected:
+            verdict_parts.append("**This post should be treated with skepticism due to the use of artificial imagery.**")
+        elif fact_check and fact_check.get("risk_level") == "high":
+            verdict_parts.append("**This post contains highly questionable claims and should not be trusted.**")
+        else:
+            verdict_parts.append("**Verify this content through reliable sources before accepting it as fact.**")
+
+        return " ".join(verdict_parts)
 
 
 # Singleton instance

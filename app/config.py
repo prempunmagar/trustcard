@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     # ============================================================================
     SECRET_KEY: str = "dev-secret-key-change-in-production"
 
+    # ============================================================================
+    # ANTHROPIC API
+    # ============================================================================
+    ANTHROPIC_API_KEY: Optional[str] = None
+
     # CORS
     CORS_ORIGINS: List[str] = ["*"]  # Set specific origins in production
     CORS_ALLOW_CREDENTIALS: bool = True

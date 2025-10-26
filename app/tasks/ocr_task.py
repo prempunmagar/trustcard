@@ -8,6 +8,7 @@ from celery import shared_task
 import logging
 
 from app.services.ocr_service import ocr_service
+from app.services.claude_vision_ocr import claude_vision_ocr
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,45 @@ def run_ocr_extraction(self, image_urls: list, caption: str) -> dict:
         logger.info(f"📝 [OCR-{task_id}] Starting OCR on {len(image_urls)} images")
 
         if image_urls:
-            ocr_results = ocr_service.extract_from_multiple_images(image_urls)
+            # Try Claude Vision first (more accurate)
+            ocr_results = []
+            for idx, image_url in enumerate(image_urls, 1):
+                logger.info(f"Running OCR on image {idx}/{len(image_urls)}")
+
+                # Download image for Claude Vision (Instagram blocks direct URL access)
+                import requests
+                try:
+                    response = requests.get(image_url, timeout=10)
+                    response.raise_for_status()
+                    image_bytes = response.content
+
+                    # Determine media type from URL or headers
+                    content_type = response.headers.get('content-type', 'image/jpeg')
+                    media_type = content_type if content_type.startswith('image/') else 'image/jpeg'
+
+                    # Try Claude Vision with image bytes
+                    claude_text = claude_vision_ocr.extract_text_from_image_bytes(image_bytes, media_type)
+
+                    if claude_text:
+                        # Claude Vision succeeded
+                        ocr_results.append({
+                            "text": claude_text,
+                            "raw_text": claude_text,
+                            "word_count": len(claude_text.split()),
+                            "confidence": 95.0,  # Claude Vision is highly accurate
+                            "method": "claude_vision"
+                        })
+                        logger.info(f"✅ Claude Vision extracted {len(claude_text.split())} words from image {idx}")
+                    else:
+                        raise Exception("Claude Vision returned empty result")
+
+                except Exception as e:
+                    # Fallback to Tesseract
+                    logger.warning(f"⚠️ Claude Vision failed for image {idx}: {e}, falling back to Tesseract")
+                    tesseract_result = ocr_service.extract_from_url(image_url)
+                    tesseract_result["method"] = "tesseract"
+                    ocr_results.append(tesseract_result)
+
             combined = ocr_service.combine_texts(ocr_results, caption)
 
             result = {

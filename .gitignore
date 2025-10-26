@@ -4,51 +4,49 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 venv/
+env/
 ENV/
-build/
-dist/
 *.egg-info/
+dist/
+build/
 
 # Environment
 .env
 .env.local
-
-# Instagram Session (IMPORTANT!)
 instagram_session.json
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Database
-*.db
-*.sqlite
-
-# Docker
-.docker/
-
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
+# Docker
 *.log
-logs/
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
+# Test files
+test_*.py
+test_*.json
+test_*.html
+*.html
+*.json
+!requirements.txt
+!package.json
+!docker-compose.yml
 
-# ML Models (large files)
-models/*.pt
-models/*.pth
-models/*.bin
+# Celery
+celerybeat-schedule
+celerybeat.pid
 
-# Downloaded media (temporary)
-media/
-downloads/
+# Database
+*.db
+*.sqlite3
+
+# Reports
+reports/
+*.pdf

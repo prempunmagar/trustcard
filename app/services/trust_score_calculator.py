@@ -15,6 +15,9 @@ from app.scoring.scoring_config import (
     get_grade_from_score,
     get_grade_description
 )
+from app.services.findings_normalizer import findings_normalizer
+from app.services.card_generator import card_generator
+from app.schemas.card_schema import TrustCard
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +44,7 @@ class TrustScoreResult:
     total_bonuses: float    # Sum of all bonuses
     flags: List[str]        # Warning flags
     requires_review: bool   # Flagged for manual review
+    trust_card: Optional[TrustCard] = None  # Generated TrustCard (if enabled)
 
 
 class TrustScoreCalculator:
@@ -57,7 +61,13 @@ class TrustScoreCalculator:
         """
         self.config = config if config else DEFAULT_CONFIG
 
-    def calculate_trust_score(self, results: Dict) -> TrustScoreResult:
+    def calculate_trust_score(
+        self,
+        results: Dict,
+        analysis_id: Optional[str] = None,
+        post_info: Optional[Dict] = None,
+        generate_card: bool = True
+    ) -> TrustScoreResult:
         """
         Calculate trust score from analysis results.
 
@@ -68,6 +78,9 @@ class TrustScoreCalculator:
                 - deepfake: Deepfake detection results
                 - fact_check: Fact-checking results
                 - source_credibility: Source credibility results
+            analysis_id: Optional analysis ID for card generation
+            post_info: Optional post metadata for card generation
+            generate_card: Whether to generate TrustCard (default: True)
 
         Returns:
             TrustScoreResult: Complete scoring result with breakdown
@@ -126,6 +139,26 @@ class TrustScoreCalculator:
         logger.info(f"   Total Penalties: {total_penalties:.1f}")
         logger.info(f"   Total Bonuses: {total_bonuses:.1f}")
 
+        # Generate TrustCard if requested
+        trust_card = None
+        if generate_card and analysis_id and post_info:
+            try:
+                logger.info(f"🎯 [Trust Score] Generating TrustCard...")
+                # Normalize findings
+                normalized_findings = findings_normalizer.normalize(results, post_info)
+
+                # Generate card with Claude
+                trust_card = card_generator.generate_card(
+                    normalized_findings=normalized_findings,
+                    trust_score=round(score, 2),
+                    grade=grade,
+                    analysis_id=analysis_id
+                )
+                logger.info(f"✅ [Trust Score] TrustCard generated successfully")
+            except Exception as e:
+                logger.error(f"❌ [Trust Score] Failed to generate TrustCard: {e}")
+                # Continue without card - not a critical failure
+
         return TrustScoreResult(
             final_score=round(score, 2),
             grade=grade,
@@ -135,7 +168,8 @@ class TrustScoreCalculator:
             total_penalties=round(total_penalties, 2),
             total_bonuses=round(total_bonuses, 2),
             flags=flags,
-            requires_review=requires_review
+            requires_review=requires_review,
+            trust_card=trust_card
         )
 
     def _process_ai_detection(self, ai_detection: Dict) -> List[ScoreAdjustment]:
@@ -420,16 +454,30 @@ class TrustScoreCalculator:
 trust_score_calculator = TrustScoreCalculator()
 
 
-def calculate_trust_score(results: Dict, config: TrustScoreConfig = None) -> TrustScoreResult:
+def calculate_trust_score(
+    results: Dict,
+    config: TrustScoreConfig = None,
+    analysis_id: Optional[str] = None,
+    post_info: Optional[Dict] = None,
+    generate_card: bool = True
+) -> TrustScoreResult:
     """
     Convenience function to calculate trust score.
 
     Args:
         results: Analysis results
         config: Optional custom configuration
+        analysis_id: Optional analysis ID for card generation
+        post_info: Optional post metadata for card generation
+        generate_card: Whether to generate TrustCard (default: True)
 
     Returns:
         TrustScoreResult: Complete scoring result
     """
     calculator = TrustScoreCalculator(config) if config else trust_score_calculator
-    return calculator.calculate_trust_score(results)
+    return calculator.calculate_trust_score(
+        results=results,
+        analysis_id=analysis_id,
+        post_info=post_info,
+        generate_card=generate_card
+    )

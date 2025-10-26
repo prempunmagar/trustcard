@@ -175,11 +175,18 @@ class ClaimExtractor:
                         'proves', 'prove', 'demonstrates', 'demonstrate',
                         'reveals', 'reveal', 'confirms', 'confirm'}
 
+        # Event verbs that indicate historical/news claims
+        event_verbs = {'found', 'discovered', 'stolen', 'shattered', 'broken',
+                      'destroyed', 'lost', 'recovered', 'seized', 'occurred',
+                      'happened', 'took', 'died', 'killed', 'announced',
+                      'reported', 'revealed', 'confirmed', 'declared',
+                      'arrested', 'caught', 'escaped', 'attacked', 'invaded'}
+
         for sent in doc.sents:
             sent_text = sent.text.strip()
 
-            # Skip very short sentences
-            if len(sent_text.split()) < 5:
+            # Skip very short sentences (reduced from 5 to 3 words)
+            if len(sent_text.split()) < 3:
                 continue
 
             # Skip questions
@@ -189,11 +196,19 @@ class ClaimExtractor:
             # Check for factual verbs
             tokens = [token.lemma_.lower() for token in sent]
             has_factual_verb = any(verb in tokens for verb in factual_verbs)
+            has_event_verb = any(verb in tokens for verb in event_verbs)
 
             # Check for proper nouns (entities) - factual claims often reference entities
             has_entities = len(sent.ents) > 0
 
-            if has_factual_verb and has_entities:
+            # Check for dates, numbers, or locations (strong indicators of factual claims)
+            has_temporal = any(ent.label_ in ['DATE', 'TIME', 'CARDINAL', 'GPE', 'LOC'] for ent in sent.ents)
+
+            # Accept claims if they have:
+            # 1. Factual verb AND entities
+            # 2. Event verb (even without entities - events are inherently factual)
+            # 3. Temporal/location info with any verb
+            if (has_factual_verb and has_entities) or has_event_verb or has_temporal:
                 claims.append({
                     'text': sent_text,
                     'type': 'factual',

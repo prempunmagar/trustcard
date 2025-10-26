@@ -7,7 +7,7 @@ Separate task module for parallel processing.
 from celery import shared_task
 import logging
 
-from app.services.ai_detection_service import ai_detection_service
+from app.services.claude_ai_detection import claude_ai_detection
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @shared_task(name="analysis.ai_detection", bind=True)
 def run_ai_detection(self, image_urls: list) -> dict:
     """
-    Run AI image detection on images.
+    Run AI image detection on images using Claude Vision.
 
     This task can run in parallel with other independent tasks.
 
@@ -35,21 +35,27 @@ def run_ai_detection(self, image_urls: list) -> dict:
                 "reason": "No images in post"
             }
 
-        logger.info(f"🤖 [AI-{task_id}] Starting AI detection on {len(image_urls)} images")
+        logger.info(f"🤖 [AI-{task_id}] Starting Claude Vision AI detection on {len(image_urls)} images")
 
-        # Initialize and run
-        ai_detection_service.initialize()
-        ai_results = ai_detection_service.detect_multiple_images(image_urls)
-        overall = ai_detection_service.get_overall_assessment(ai_results)
+        # Use Claude Vision for AI detection
+        results = claude_ai_detection.detect_multiple_images(image_urls)
 
         result = {
             "status": "completed",
-            "overall": overall,
-            "individual_results": ai_results,
-            "model": "umm-maybe/AI-image-detector"
+            "overall": {
+                "overall_ai_detected": results["overall_ai_detected"],
+                "confidence": results["confidence"],
+                "ai_images": results["ai_images"],
+                "real_images": results["real_images"],
+                "uncertain_images": results["uncertain_images"],
+                "total_images": results["total_images"],
+                "assessment": results["assessment"]
+            },
+            "individual_results": results["individual_results"],
+            "model": "claude-3-5-sonnet-20241022"
         }
 
-        logger.info(f"✅ [AI-{task_id}] Complete: {overall['assessment']}")
+        logger.info(f"✅ [AI-{task_id}] Complete: {results['assessment']}")
         return result
 
     except Exception as e:

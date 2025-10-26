@@ -140,6 +140,42 @@ def complete_analysis(self, parallel_results: list, analysis_id: str, post_info:
             logger.info(f"✅ [Callback] Source evaluation: {source_eval_result.get('status')}")
 
             # ==========================================
+            # STEP 4.5: Verify Claims with Web Search (Sequential)
+            # ==========================================
+            logger.info(f"🔍 [Callback] Verifying claims with web search")
+
+            claim_verification_result = {"status": "skipped"}
+
+            # Only verify if we have claims and fact-checking succeeded
+            if (fact_check_result.get("status") == "completed" and
+                fact_check_result.get("claim_extraction", {}).get("has_claims")):
+
+                try:
+                    from app.services.claude_claim_verifier import claude_claim_verifier
+
+                    # Get analyzed claims
+                    claims_to_verify = fact_check_result.get("analyzed_claims", [])
+
+                    if claims_to_verify:
+                        # Verify claims
+                        claim_verification_result = claude_claim_verifier.verify_claims(
+                            claims=claims_to_verify,
+                            post_context=f"Instagram post by @{instagram_user.get('username', 'unknown')}: {caption[:200]}"
+                        )
+                        logger.info(f"✅ [Callback] Verified {claim_verification_result.get('total_verified', 0)} claims")
+                    else:
+                        logger.info(f"ℹ️ [Callback] No claims to verify")
+
+                except Exception as cv_error:
+                    logger.error(f"❌ [Callback] Claim verification failed: {cv_error}")
+                    claim_verification_result = {
+                        "status": "error",
+                        "error": str(cv_error)
+                    }
+            else:
+                logger.info(f"ℹ️ [Callback] Skipping claim verification (no claims or fact-check failed)")
+
+            # ==========================================
             # STEP 5: Aggregate Results
             # ==========================================
             post_type = post_info.get("type", "")
@@ -161,17 +197,23 @@ def complete_analysis(self, parallel_results: list, analysis_id: str, post_info:
                 "ocr": ocr_result,
                 "deepfake": deepfake_result,
                 "fact_check": fact_check_result,
+                "claim_verification": claim_verification_result,
                 "source_credibility": source_eval_result,
                 "ocr_text": ocr_text  # Add extracted text for report display
             }
 
             # ==========================================
-            # STEP 6: Calculate Trust Score
+            # STEP 6: Calculate Trust Score & Generate Card
             # ==========================================
-            logger.info(f"🎯 [Callback] Calculating trust score")
+            logger.info(f"🎯 [Callback] Calculating trust score and generating TrustCard")
 
-            # Use centralized calculator
-            score_result = calculate_trust_score(results)
+            # Use centralized calculator with card generation
+            score_result = calculate_trust_score(
+                results=results,
+                analysis_id=analysis_id,
+                post_info=post_info,
+                generate_card=True
+            )
 
             # Extract trust score and grade
             trust_score = score_result.final_score
@@ -198,6 +240,13 @@ def complete_analysis(self, parallel_results: list, analysis_id: str, post_info:
                 "flags": score_result.flags,
                 "requires_review": score_result.requires_review
             }
+
+            # Add TrustCard to results if generated
+            if score_result.trust_card:
+                results["trust_card"] = score_result.trust_card.model_dump()
+                logger.info(f"✅ [Callback] TrustCard included in results")
+            else:
+                logger.warning(f"⚠️ [Callback] No TrustCard generated")
 
             # Calculate processing time
             processing_time = int(time.time() - created_timestamp)

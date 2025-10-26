@@ -46,6 +46,9 @@ textblob==0.17.1
 nltk==3.8.1
 langdetect==1.0.9
 
+# Anthropic Claude API (for improved OCR)
+anthropic==0.40.0
+
 # Templating & Report Generation (Step 13)
 jinja2==3.1.2
 

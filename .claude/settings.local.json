@@ -17,7 +17,14 @@
       "Bash(timeout 20 bash:*)",
       "Bash(docker exec trustcard-db psql -U trustcard -d trustcard -c \"DELETE FROM analyses WHERE post_id=''DQAMs6PiJNa'';\")",
       "Bash(timeout 45 bash:*)",
-      "Bash(python -m json.tool:*)"
+      "Bash(python -m json.tool:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker exec:*)",
+      "Bash(timeout 30 bash:*)",
+      "Bash(python -c \"import sys, json; data = json.load(sys.stdin); ai = data[''''analysis_results''''][''''ai_detection'''']; print(''''=== CLAUDE VISION AI DETECTION ===''''); print(f''''Model: {ai[\"\"model\"\"]}''''); print(f''''Assessment: {ai[\"\"overall\"\"][\"\"assessment\"\"]}''''); print(f''''AI Generated: {ai[\"\"overall\"\"][\"\"overall_ai_detected\"\"]}''''); print(f''''Confidence: {ai[\"\"overall\"\"][\"\"confidence\"\"] * 100:.1f}%''''); print(f''''\\nReasoning: {ai[\"\"individual_results\"\"][0][\"\"reasoning\"\"]}''''); print(f''''\\nIndicators found:''''); [print(f''''  - {ind}'''') for ind in ai[''''individual_results''''][0][''''indicators''''][:5]]; print(f''''\\n=== TRUST SCORE ===''''); print(f''''Score: {data[\"\"trust_score\"\"]}/100 ({data[\"\"grade\"\"]})'''')\")",
+      "Bash(python:*)",
+      "Bash(docker system:*)",
+      "Bash(docker builder prune:*)"
     ],
     "deny": [],
     "ask": []

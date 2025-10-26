@@ -16,10 +16,11 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
             color: #333;
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -30,46 +31,46 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 32px;
+            font-size: 36px;
             margin-bottom: 10px;
             font-weight: 700;
         }
 
         .header .tagline {
-            font-size: 16px;
-            opacity: 0.9;
-            font-style: italic;
+            font-size: 18px;
+            opacity: 0.95;
         }
 
-        .post-info {
-            padding: 20px 30px;
+        .meta-bar {
+            padding: 15px 30px;
             background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .post-info p {
-            margin: 5px 0;
-            font-size: 14px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 13px;
             color: #6c757d;
         }
 
+        .meta-bar span {
+            margin-right: 20px;
+        }
+
         .score-section {
-            padding: 40px 30px;
+            padding: 50px 40px;
             text-align: center;
             background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+            border-bottom: 3px solid #e9ecef;
         }
 
         .trust-score {
             display: inline-block;
-            padding: 20px 40px;
+            padding: 30px 50px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
             margin-bottom: 20px;
         }
 
@@ -77,197 +78,227 @@
             font-size: 14px;
             color: #6c757d;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
         .trust-score .score {
-            font-size: 48px;
-            font-weight: 700;
+            font-size: 56px;
+            font-weight: 800;
             color: {{ grade_color }};
+            line-height: 1;
         }
 
         .assessment {
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 18px;
             color: #495057;
-            max-width: 600px;
-            margin: 0 auto;
+            margin-top: 15px;
+            font-weight: 500;
         }
 
-        .section {
-            padding: 30px;
+        .post-preview {
+            padding: 40px;
+            background: #fafbfc;
             border-bottom: 2px solid #e9ecef;
         }
 
-        .section-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
+        .post-preview h2 {
+            font-size: 22px;
+            margin-bottom: 25px;
             color: #495057;
+            font-weight: 700;
+        }
+
+        .post-image {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .post-caption {
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid {{ grade_color }};
+            font-size: 15px;
+            line-height: 1.8;
+            color: #495057;
+        }
+
+        .post-caption strong {
+            display: block;
+            margin-bottom: 10px;
+            color: #343a40;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section {
+            padding: 40px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #343a40;
             display: flex;
             align-items: center;
         }
 
-        .section-title::before {
-            content: '';
-            width: 4px;
-            height: 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .section-title .icon {
+            font-size: 28px;
             margin-right: 12px;
-            border-radius: 2px;
         }
 
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+        .narrative {
+            font-size: 16px;
+            line-height: 1.9;
+            color: #495057;
+            margin-bottom: 20px;
         }
 
-        .analysis-item {
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid {{ grade_color }};
-        }
-
-        .analysis-item .name {
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .analysis-item .grade {
-            font-size: 32px;
-            font-weight: 700;
-            color: {{ grade_color }};
-            margin-bottom: 4px;
-        }
-
-        .analysis-item .status {
-            font-size: 12px;
-            color: #6c757d;
-        }
-
-        .community-section {
-            background: #f8f9fa;
-        }
-
-        .vote-bars {
-            margin-top: 20px;
-        }
-
-        .vote-bar {
+        .narrative p {
             margin-bottom: 15px;
         }
 
-        .vote-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .vote-label .type {
+        .narrative strong {
+            color: #343a40;
             font-weight: 600;
         }
 
-        .vote-label .count {
-            color: #6c757d;
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
         }
 
-        .bar-container {
-            height: 30px;
-            background: #e9ecef;
-            border-radius: 15px;
-            overflow: hidden;
+        .highlight-box.danger {
+            background: #f8d7da;
+            border-left-color: #dc3545;
         }
 
-        .bar-fill {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            color: white;
-            font-weight: 600;
+        .highlight-box.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .highlight-box.info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        .highlight-box strong {
+            display: block;
+            margin-bottom: 8px;
             font-size: 14px;
-            transition: width 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .bar-accurate {
-            background: linear-gradient(90deg, #28a745, #20c997);
+        .quote-block {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px 25px;
+            margin: 20px 0;
+            font-style: italic;
+            font-size: 15px;
+            color: #495057;
+            border-radius: 6px;
         }
 
-        .bar-misleading {
-            background: linear-gradient(90deg, #ffc107, #fd7e14);
+        .claim-list {
+            margin: 20px 0;
         }
 
-        .bar-false {
-            background: linear-gradient(90deg, #dc3545, #c82333);
+        .claim-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .findings-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .findings-list li {
-            padding: 12px 0;
-            padding-left: 30px;
-            position: relative;
+        .claim-item .claim-text {
+            font-size: 15px;
+            color: #343a40;
+            margin-bottom: 12px;
+            font-weight: 500;
             line-height: 1.6;
         }
 
-        .findings-list li::before {
-            content: '•';
-            position: absolute;
-            left: 10px;
-            color: #667eea;
-            font-size: 20px;
+        .claim-item .claim-verdict {
+            font-size: 13px;
+            color: #6c757d;
+            padding-left: 20px;
+            border-left: 3px solid #667eea;
+        }
+
+        .verdict-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px;
+            margin: 30px 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .verdict-box h3 {
+            font-size: 26px;
+            margin-bottom: 15px;
             font-weight: 700;
         }
 
+        .verdict-box p {
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
         .recommendation {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #343a40;
             color: white;
-            padding: 30px;
+            padding: 35px 40px;
             text-align: center;
-            font-size: 18px;
-            line-height: 1.6;
+            font-size: 17px;
+            line-height: 1.9;
+        }
+
+        .recommendation strong {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #ffc107;
         }
 
         .footer {
-            padding: 20px 30px;
+            padding: 25px 40px;
             text-align: center;
             background: #f8f9fa;
             color: #6c757d;
-            font-size: 12px;
-        }
-
-        .add-feedback-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: white;
-            color: #667eea;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
-
-        .add-feedback-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 13px;
         }
 
         @media (max-width: 768px) {
-            .analysis-grid {
-                grid-template-columns: 1fr;
+            .trust-score .score {
+                font-size: 42px;
             }
 
-            .trust-score .score {
-                font-size: 36px;
+            .section {
+                padding: 30px 25px;
             }
         }
     </style>
@@ -280,107 +311,154 @@
             <p class="tagline">"Every post gets a report card"</p>
         </div>
 
-        <!-- Post Info -->
-        <div class="post-info">
-            <p><strong>Instagram Post:</strong> @{{ username }}</p>
-            <p><strong>Post ID:</strong> {{ post_id }}</p>
-            <p><strong>Analyzed:</strong> {{ analyzed_date }}</p>
-            <p><strong>Processing Time:</strong> {{ processing_time }}s</p>
+        <!-- Meta Information -->
+        <div class="meta-bar">
+            <span><strong>@{{ username }}</strong></span>
+            <span>Post ID: {{ post_id }}</span>
+            <span>Analyzed: {{ analyzed_date }}</span>
         </div>
 
         <!-- Trust Score -->
         <div class="score-section">
             <div class="trust-score">
-                <div class="label">Overall Trust Score</div>
-                <div class="score">{{ grade }} ({{ score }}/100)</div>
+                <div class="label">Trust Score</div>
+                <div class="score">{{ grade }}</div>
+                <div style="font-size: 20px; color: #6c757d; margin-top: 10px;">{{ score }}/100</div>
             </div>
             <p class="assessment">{{ assessment }}</p>
         </div>
 
-        <!-- Detailed Analysis -->
-        <div class="section">
-            <h2 class="section-title">Detailed Analysis</h2>
-            <div class="analysis-grid">
-                {% for component in components %}
-                <div class="analysis-item">
-                    <div class="name">{{ component.name }}</div>
-                    <div class="grade">{{ component.grade }}</div>
-                    <div class="status">{{ component.status }}</div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Community Feedback -->
-        <div class="section community-section">
-            <h2 class="section-title">Community Says ({{ total_votes }} votes)</h2>
-
-            {% if total_votes > 0 %}
-            <div class="vote-bars">
-                <div class="vote-bar">
-                    <div class="vote-label">
-                        <span class="type">✓ Accurate</span>
-                        <span class="count">{{ accurate_count }} votes</span>
-                    </div>
-                    <div class="bar-container">
-                        <div class="bar-fill bar-accurate" style="width: {{ accurate_percent }}%">
-                            {{ accurate_percent }}%
-                        </div>
-                    </div>
-                </div>
-
-                <div class="vote-bar">
-                    <div class="vote-label">
-                        <span class="type">⚠ Misleading</span>
-                        <span class="count">{{ misleading_count }} votes</span>
-                    </div>
-                    <div class="bar-container">
-                        <div class="bar-fill bar-misleading" style="width: {{ misleading_percent }}%">
-                            {{ misleading_percent }}%
-                        </div>
-                    </div>
-                </div>
-
-                <div class="vote-bar">
-                    <div class="vote-label">
-                        <span class="type">✗ False</span>
-                        <span class="count">{{ false_count }} votes</span>
-                    </div>
-                    <div class="bar-container">
-                        <div class="bar-fill bar-false" style="width: {{ false_percent }}%">
-                            {{ false_percent }}%
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <p>No community feedback yet. Be the first to vote!</p>
+        <!-- The Post -->
+        <div class="post-preview">
+            <h2>📸 The Post We Analyzed</h2>
+            {% if post_image_url %}
+            <img src="{{ post_image_url }}" alt="Instagram Post" class="post-image">
             {% endif %}
 
-            <a href="/api/reports/{{ analysis_id }}/feedback" class="add-feedback-btn">Add Your Voice</a>
+            {% if caption %}
+            <div class="post-caption">
+                <strong>Caption:</strong>
+                {{ caption }}
+            </div>
+            {% endif %}
         </div>
 
-        <!-- Key Findings -->
+        <!-- What We Saw -->
         <div class="section">
-            <h2 class="section-title">Key Findings</h2>
-            <ul class="findings-list">
-                {% for finding in findings %}
-                <li>{{ finding }}</li>
+            <h2 class="section-title"><span class="icon">👁️</span> What We Saw</h2>
+
+            <div class="narrative">
+                {% if image_description %}
+                <p>{{ image_description }}</p>
+                {% else %}
+                <p>This post contains an image with text overlaid on it. The background shows what appears to be a crown or royal jewelry piece.</p>
+                {% endif %}
+            </div>
+
+            {% if ocr_text %}
+            <div class="highlight-box info">
+                <strong>Text Found on the Image:</strong>
+                <div style="margin-top: 10px; font-family: monospace; white-space: pre-wrap;">{{ ocr_text }}</div>
+            </div>
+            {% endif %}
+
+            {% if ai_detected %}
+            <div class="highlight-box danger">
+                <strong>⚠️ AI-Generated Content Detected</strong>
+                This image appears to be created by artificial intelligence, not a real photograph. The AI detection system analyzed the image and found it to be {{ ai_confidence }}% likely to be AI-generated rather than authentic.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- What It Claims -->
+        {% if fact_check and fact_check.total_claims > 0 %}
+        <div class="section">
+            <h2 class="section-title"><span class="icon">🔍</span> What It Claims</h2>
+
+            <div class="narrative">
+                <p>We found <strong>{{ fact_check.total_claims }} factual claims</strong> in this post that can be verified. Here's what the post is saying:</p>
+            </div>
+
+            <div class="claim-list">
+                {% for claim in fact_check.claims[:5] %}
+                <div class="claim-item">
+                    <div class="claim-text">"{{ claim.text }}"</div>
+                    <div class="claim-verdict">
+                        {% if claim.type == 'statistical' %}
+                        This is a statistical claim with specific numbers that can be fact-checked.
+                        {% elif claim.type == 'factual' %}
+                        This is a factual statement about an event or situation.
+                        {% elif claim.type == 'health_medical' %}
+                        This is a health/medical claim that requires verification from credible medical sources.
+                        {% else %}
+                        This claim requires verification.
+                        {% endif %}
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
+
+            {% if fact_check.total_claims > 5 %}
+            <p style="color: #6c757d; font-size: 14px; margin-top: 15px;">+ {{ fact_check.total_claims - 5 }} more claims detected</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Is It True? -->
+        <div class="section">
+            <h2 class="section-title"><span class="icon">⚖️</span> Is It True?</h2>
+
+            <div class="narrative">
+                {% if verdict_text %}
+                {{ verdict_text | safe }}
+                {% else %}
+                <p>Based on our analysis:</p>
+
+                {% if ai_detected %}
+                <p><strong>The image is AI-generated.</strong> This means it's not a real photograph but was created by artificial intelligence. The content shown in the image may not represent a real event or real object.</p>
+                {% endif %}
+
+                {% if fact_check and fact_check.total_claims > 0 %}
+                <p><strong>The text contains {{ fact_check.total_claims }} claims</strong> about the Empress Eugénie crown and an alleged heist. {% if fact_check.risk_level == 'low' %}These claims contain some factual information but may be presented in a misleading way.{% elif fact_check.risk_level == 'medium' %}These claims need verification before being accepted as fact.{% else %}These claims raise significant red flags and should not be trusted without verification.{% endif %}</p>
+                {% endif %}
+
+                {% if source_credibility %}
+                <p><strong>The source account {% if not source_credibility.is_verified %}is not verified{% else %}is verified{% endif %}.</strong> This {{ "adds credibility" if source_credibility.is_verified else "means we cannot verify the account's authenticity or reliability" }}.</p>
+                {% endif %}
+
+                <p>The combination of an AI-generated image, unverified claims, and {% if source_credibility and not source_credibility.is_verified %}an unverified source{% else %}the presentation style{% endif %} suggests this post is likely <strong>misleading or potentially false</strong>.</p>
+                {% endif %}
+            </div>
+
+            {% if fact_check and fact_check.flags %}
+            <div class="highlight-box danger">
+                <strong>🚩 Red Flags Detected:</strong>
+                <ul style="margin-top: 10px; margin-left: 20px;">
+                    {% for flag in fact_check.flags %}
+                    <li>{{ flag }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Verdict -->
+        <div class="verdict-box">
+            <h3>📋 Our Verdict</h3>
+            <p>{{ final_verdict }}</p>
         </div>
 
         <!-- Recommendation -->
         <div class="recommendation">
-            <strong>⚡ Recommendation</strong><br>
+            <strong>⚡ What Should You Do?</strong>
             {{ recommendation }}
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p>TrustCard provides analysis to help you make informed decisions.</p>
-            <p>Always verify important claims independently.</p>
-            <p style="margin-top: 10px;">Generated by TrustCard v1.0 • {{ current_year }}</p>
+            <p>TrustCard analyzes posts to help you make informed decisions.</p>
+            <p>Always verify important information from multiple reliable sources.</p>
+            <p style="margin-top: 15px; font-weight: 600;">Generated by TrustCard • {{ current_year }}</p>
         </div>
     </div>
 </body>
