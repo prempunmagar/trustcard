@@ -28,6 +28,18 @@ class InstagramService:
         self.session_file = "instagram_session.json"
         self._authenticated = False
 
+    def challenge_code_handler(self, username, choice):
+        """
+        Custom challenge code handler for 2FA/verification codes
+        Prompts user for code via console input
+        """
+        print(f"\n{'='*60}")
+        print(f"Instagram 2FA Challenge for {username}")
+        print(f"Challenge type: {choice}")
+        print(f"{'='*60}")
+        code = input("Enter the 6-digit verification code: ")
+        return code
+
     def authenticate(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         """
         Authenticate with Instagram
@@ -59,8 +71,12 @@ class InstagramService:
             logger.warning(f"Could not load existing session: {e}")
 
         try:
-            # Fresh login
+            # Fresh login with challenge code handler
             logger.info("Performing fresh Instagram login...")
+
+            # Set challenge code handler for 2FA
+            self.client.challenge_code_handler = self.challenge_code_handler
+
             self.client.login(username, password)
 
             # Save session for reuse
