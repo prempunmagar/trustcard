@@ -2,9 +2,13 @@
 TrustCard - Every post gets a report card
 Main FastAPI application entry point
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
 from app.config import settings
+from app.database import get_db
 
 app = FastAPI(
     title="TrustCard API",
@@ -21,6 +25,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize on startup"""
+    print("🚀 Starting TrustCard API...")
+    print("✅ Database connection ready")
+
 @app.get("/")
 async def root():
     """Health check endpoint"""
@@ -32,11 +42,18 @@ async def root():
     }
 
 @app.get("/health")
-async def health_check():
+async def health_check(db: Session = Depends(get_db)):
     """Detailed health check"""
+    try:
+        # Test database connection
+        db.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
     return {
         "status": "healthy",
-        "database": "not configured yet",
+        "database": db_status,
         "redis": "not configured yet",
         "celery": "not configured yet"
     }

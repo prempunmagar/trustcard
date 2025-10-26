@@ -12,11 +12,11 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = True
 
-    # Database (will configure in Step 2)
-    DATABASE_URL: Optional[str] = None
+    # Database
+    DATABASE_URL: str = "postgresql://trustcard:trustcard@db:5432/trustcard"
 
     # Redis (will configure in Step 3)
-    REDIS_URL: Optional[str] = None
+    REDIS_URL: str = "redis://redis:6379/0"
 
     # API
     API_HOST: str = "0.0.0.0"

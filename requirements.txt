@@ -7,7 +7,8 @@ pydantic-settings==2.1.0
 # Database
 sqlalchemy==2.0.23
 alembic==1.12.1
-psycopg[binary]==3.1.18  # Using psycopg3 for Python 3.13 compatibility
+psycopg2-binary==2.9.9  # PostgreSQL adapter for SQLAlchemy (works in Docker with Python 3.11)
+psycopg[binary]==3.1.18  # Keeping psycopg3 for future Python 3.13 compatibility
 
 # Async Task Queue
 celery==5.3.4
