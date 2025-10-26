@@ -10,6 +10,8 @@ from app.models.analysis import Analysis
 class CRUDAnalysis:
     """CRUD operations for analyses"""
 
+    model = Analysis  # Add this for query building
+
     @staticmethod
     def get_by_id(db: Session, analysis_id: UUID) -> Optional[Analysis]:
         """Get analysis by ID"""
@@ -24,6 +26,30 @@ class CRUDAnalysis:
     def get_by_url(db: Session, instagram_url: str) -> Optional[Analysis]:
         """Get analysis by Instagram URL"""
         return db.query(Analysis).filter(Analysis.instagram_url == instagram_url).first()
+
+    @staticmethod
+    def get_by_url_cached(db: Session, instagram_url: str) -> Optional[Analysis]:
+        """
+        Get most recent analysis by URL with query optimization.
+        Uses indexed column and orders by created_at for efficient lookup.
+        """
+        return db.query(Analysis).filter(
+            Analysis.instagram_url == instagram_url
+        ).order_by(
+            Analysis.created_at.desc()
+        ).first()
+
+    @staticmethod
+    def get_recent(db: Session, limit: int = 10) -> List[Analysis]:
+        """
+        Get recent completed analyses.
+        Optimized query with indexed columns.
+        """
+        return db.query(Analysis).filter(
+            Analysis.status == "completed"
+        ).order_by(
+            Analysis.created_at.desc()
+        ).limit(limit).all()
 
     @staticmethod
     def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[Analysis]:

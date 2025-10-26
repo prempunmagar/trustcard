@@ -18,6 +18,20 @@ services:
       - redis
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  celery_worker:
+    build: .
+    container_name: trustcard-celery-worker
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://trustcard:trustcard@db:5432/trustcard
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    command: celery -A app.celery_app worker --loglevel=info --queues=analysis
+
   db:
     image: postgres:15-alpine
     container_name: trustcard-db

@@ -1,8 +1,8 @@
 # Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+pydantic==2.7.1
+pydantic-settings==2.3.0
 
 # Database
 sqlalchemy==2.0.23
@@ -17,11 +17,47 @@ redis==5.0.1
 # Environment Management
 python-dotenv==1.0.0
 
-# Instagram Scraping (will add in Step 4)
-# instagrapi==2.0.0
+# Instagram Scraping
+instagrapi==2.1.2
+requests==2.31.0
+pillow==10.1.0
+
+# Machine Learning - AI Detection (Step 6)
+torch==2.1.0
+torchvision==0.16.0
+transformers==4.35.0
+accelerate==0.24.0
+
+# Image Processing & OCR (Step 7)
+opencv-python==4.8.1.78
+numpy==1.24.3
+pytesseract==0.3.10
+
+# Video Processing & Deepfake Detection (Step 8)
+moviepy==1.0.3
+imageio==2.31.5
+imageio-ffmpeg==0.4.9
+scikit-image==0.22.0
+scipy==1.11.4
+
+# NLP & Fact-Checking (Step 9)
+spacy==3.7.2
+textblob==0.17.1
+nltk==3.8.1
+langdetect==1.0.9
+
+# Templating & Report Generation (Step 13)
+jinja2==3.1.2
+
+# Monitoring & Metrics (Step 15)
+prometheus-client==0.19.0
+
+# Testing (Step 16)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+httpx==0.25.2
+faker==20.1.0
 
 # Future ML dependencies (will add in later steps)
-# transformers
-# torch
-# pytesseract
-# opencv-python
