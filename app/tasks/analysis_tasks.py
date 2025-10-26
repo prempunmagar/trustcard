@@ -146,6 +146,11 @@ def complete_analysis(self, parallel_results: list, analysis_id: str, post_info:
             image_urls = post_info.get("images", [])
             video_urls = post_info.get("videos", [])
 
+            # Extract OCR text for display
+            ocr_text = None
+            if ocr_result and "combined" in ocr_result:
+                ocr_text = ocr_result.get("combined", {}).get("combined_text")
+
             results = {
                 "instagram_extraction": {
                     "status": "success",
@@ -156,7 +161,8 @@ def complete_analysis(self, parallel_results: list, analysis_id: str, post_info:
                 "ocr": ocr_result,
                 "deepfake": deepfake_result,
                 "fact_check": fact_check_result,
-                "source_credibility": source_eval_result
+                "source_credibility": source_eval_result,
+                "ocr_text": ocr_text  # Add extracted text for report display
             }
 
             # ==========================================
@@ -204,7 +210,8 @@ def complete_analysis(self, parallel_results: list, analysis_id: str, post_info:
                 analysis_id=UUID(analysis_id),
                 results=results,
                 trust_score=trust_score,
-                processing_time=processing_time
+                processing_time=processing_time,
+                content=post_info  # Save Instagram post metadata
             )
 
             # ==========================================

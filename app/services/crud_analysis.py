@@ -75,7 +75,8 @@ class CRUDAnalysis:
         analysis_id: UUID,
         results: dict,
         trust_score: float,
-        processing_time: int
+        processing_time: int,
+        content: dict = None
     ) -> Optional[Analysis]:
         """Update analysis with results"""
         analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
@@ -84,6 +85,8 @@ class CRUDAnalysis:
             analysis.trust_score = trust_score
             analysis.processing_time = processing_time
             analysis.status = "completed"
+            if content:
+                analysis.content = content
             db.commit()
             db.refresh(analysis)
         return analysis
