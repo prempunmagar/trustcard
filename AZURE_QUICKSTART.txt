@@ -1,0 +1,106 @@
+╔════════════════════════════════════════════════════════════════╗
+║          TrustCard - Azure VM Deployment Quick Start          ║
+╚════════════════════════════════════════════════════════════════╝
+
+📋 PREREQUISITES
+   ✓ Azure subscription (you have this!)
+   ✓ SSH client
+   ✓ 10-15 minutes
+
+💰 COST: ~$35-65/month (B2s or B2ms VM)
+
+═══════════════════════════════════════════════════════════════════
+
+🚀 DEPLOYMENT STEPS
+
+1️⃣  CREATE VM (Azure Portal)
+    • Go to portal.azure.com
+    • Create Resource → Ubuntu Server 22.04 LTS
+    • Size: B2s (4GB) or B2ms (8GB) ← Recommended
+    • Open ports: 22, 80, 443
+    • Download SSH key (.pem)
+
+2️⃣  CONNECT TO VM
+    ssh -i your-key.pem azureuser@YOUR_VM_IP
+
+3️⃣  INSTALL DOCKER (run on VM)
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    sudo usermod -aG docker $USER
+    
+    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    
+    exit  # Log out and back in
+
+4️⃣  CLONE & CONFIGURE
+    git clone https://github.com/prempunmagar/trustcard.git
+    cd trustcard
+    cp .env.example .env
+    nano .env  # Add your API keys and passwords
+
+5️⃣  DEPLOY
+    docker-compose -f docker-compose.prod.yml up -d --build
+
+6️⃣  TEST
+    curl http://localhost:8000/health
+    
+    From your computer:
+    http://YOUR_VM_IP:8000/docs
+
+═══════════════════════════════════════════════════════════════════
+
+🔑 REQUIRED .ENV VALUES
+
+   ANTHROPIC_API_KEY=sk-ant-api03-xxxxx     (Get from console.anthropic.com)
+   INSTAGRAM_USERNAME=test_account          (Use test account!)
+   INSTAGRAM_PASSWORD=test_password
+   SECRET_KEY=<generate random string>      (python3 -c "import secrets; print(secrets.token_urlsafe(50))")
+   
+   DATABASE_URL password - change "trustcard" to strong password
+   SERPER_API_KEY (optional for web search)
+
+═══════════════════════════════════════════════════════════════════
+
+📊 USEFUL COMMANDS
+
+   View logs:
+   docker-compose -f docker-compose.prod.yml logs -f
+   
+   Restart:
+   docker-compose -f docker-compose.prod.yml restart
+   
+   Update code:
+   git pull && docker-compose -f docker-compose.prod.yml up -d --build
+   
+   Check status:
+   docker-compose -f docker-compose.prod.yml ps
+
+═══════════════════════════════════════════════════════════════════
+
+🧪 TEST YOUR API
+
+   curl -X POST "http://YOUR_VM_IP:8000/api/analyze" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://www.instagram.com/p/DQAMs6PiJNa/"}'
+   
+   Then open in browser:
+   http://YOUR_VM_IP:8000/api/reports/{analysis_id}
+
+═══════════════════════════════════════════════════════════════════
+
+📚 FULL DOCUMENTATION
+
+   • AZURE_DEPLOYMENT.md - Complete Azure guide
+   • DEPLOYMENT.md - General deployment guide
+   • README.md - Project overview
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 YOUR API WILL BE LIVE AT:
+   
+   http://YOUR_VM_IP:8000
+   http://YOUR_VM_IP:8000/docs
+   http://YOUR_VM_IP:8000/health
+
+═══════════════════════════════════════════════════════════════════
