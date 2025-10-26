@@ -7,7 +7,7 @@ pydantic-settings==2.1.0
 # Database
 sqlalchemy==2.0.23
 alembic==1.12.1
-psycopg2-binary==2.9.9
+psycopg[binary]==3.1.18  # Using psycopg3 for Python 3.13 compatibility
 
 # Async Task Queue
 celery==5.3.4
