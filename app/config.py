@@ -83,9 +83,15 @@ class Settings(BaseSettings):
     MAX_URL_LENGTH: int = 2000
     MAX_COMMENT_LENGTH: int = 1000
 
+    # ============================================================================
+    # SERPER API (for web search fact-checking)
+    # ============================================================================
+    SERPER_API_KEY: Optional[str] = None
+
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables
 
     @property
     def is_production(self) -> bool:
