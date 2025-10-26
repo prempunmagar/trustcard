@@ -7,7 +7,7 @@ import asyncio
 import sys
 from app.services.instagram_service import InstagramService
 
-async def main():
+def main():
     print("=" * 60)
     print("Instagram Authentication")
     print("=" * 60)
@@ -16,18 +16,24 @@ async def main():
     service = InstagramService()
 
     try:
-        await service.login()
+        success = service.authenticate()
         print()
-        print("✅ Authentication successful!")
-        print("✅ Session saved to instagram_session.json")
-        print()
-        print("You can now use the analysis API.")
-        return 0
+        if success:
+            print("✅ Authentication successful!")
+            print("✅ Session saved to instagram_session.json")
+            print()
+            print("You can now use the analysis API.")
+            return 0
+        else:
+            print("❌ Authentication failed!")
+            return 1
     except Exception as e:
         print()
         print(f"❌ Authentication failed: {e}")
+        import traceback
+        traceback.print_exc()
         return 1
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = main()
     sys.exit(exit_code)
